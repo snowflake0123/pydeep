@@ -1,9 +1,7 @@
 import os
 import shutil
-import sys
 
-from keras.datasets import mnist
-from keras.utils import to_categorical
+from keras.preprocessing.image import ImageDataGenerator
 import matplotlib.pyplot as plt
 
 
@@ -20,22 +18,29 @@ def mkdir(d, rm=False):
 
 
 # 訓練用データセットを取得する関数
-def load_data(data_size=-1):
-    (train_images, train_classes), (_, _) = mnist.load_data()
+def make_generator(src_dir, valid_rate, input_size, batch_size):
+    # ImageDataGenerator クラスのインスタンスを作成
+    train_datagen = ImageDataGenerator(
+        rescale=1./255,
+        validation_split=valid_rate)
 
-    train_images = train_images.reshape(60000, 28, 28, 1)
-    train_images = train_images.astype('float32') / 255
-    train_classes = to_categorical(train_classes)
+    # 訓練用データを読み込むためのジェネレータを作成
+    train_generator = train_datagen.flow_from_directory(
+        src_dir,
+        target_size=input_size,
+        batch_size=batch_size,
+        class_mode='categorical',
+        subset='training')
 
-    if data_size > len(train_images):
-        # 指定されたデータ数がデータセットサイズを上回っていた場合のエラー処理
-        print('[ERROR] data_size should be less than or equal to len(train_images).')
-        sys.exit(0)
-    elif data_size == -1:
-        # データ数の指定が無い場合はデータセットサイズを取得するデータ数とする
-        data_size = len(train_images)
+    # 検証用データを読み込むためのジェネレータを作成
+    valid_generator = train_datagen.flow_from_directory(
+        src_dir,
+        target_size=input_size,
+        batch_size=batch_size,
+        class_mode='categorical',
+        subset='validation')
 
-    return train_images[:data_size], train_classes[:data_size]
+    return train_generator, valid_generator
 
 
 # 訓練状況を可視化する関数
