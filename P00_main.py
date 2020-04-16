@@ -36,6 +36,5 @@ maker = ModelMaker (
     lr          = LR,
     batch_size  = BATCH_SIZE,
     epochs      = EPOCHS,
-    valid_rate  = VALID_RATE
-)
+    valid_rate  = VALID_RATE)
 maker.execute()
