@@ -1,3 +1,5 @@
+import math
+
 from keras.layers import Flatten, Input
 from keras.models import Model
 from keras.optimizers import Adam
@@ -8,10 +10,11 @@ import P11_model_util as mutil
 
 class ModelMaker:
     # コンストラクタ
-    def __init__(self, dst_dir, est_file,
+    def __init__(self, src_dir, dst_dir, est_file,
                  info_file, graph_file, hist_file,
                  input_size, filters, kernel_size, pool_size, dense_dims,
-                 lr, data_size, batch_size, epochs, valid_rate):
+                 lr, batch_size, epochs, valid_rate):
+        self.src_dir     = src_dir
         self.dst_dir     = dst_dir
         self.est_file    = est_file
         self.info_file   = info_file
@@ -23,7 +26,6 @@ class ModelMaker:
         self.pool_size   = pool_size
         self.dense_dims  = dense_dims
         self.lr          = lr
-        self.data_size   = data_size
         self.batch_size  = batch_size
         self.epochs      = epochs
         self.valid_rate  = valid_rate
@@ -32,7 +34,7 @@ class ModelMaker:
     # モデルを定義するメソッド
     def define_model(self):
         # 入力層の定義
-        input_x = Input(shape=(*self.input_size, 1))
+        input_x = Input(shape=(*self.input_size, 3))
         x = input_x
 
         # 畳み込み層・プーリング層の定義
@@ -66,15 +68,16 @@ class ModelMaker:
     # モデルを訓練するメソッド
     def fit_model(self, model):
         # データセットの読み込み
-        train_images, train_classes = util.load_data(self.data_size)
+        train_generator, valid_generator = util.make_generator(
+            self.src_dir, self.valid_rate, self.input_size, self.batch_size)
 
         # 訓練の実行
-        history = model.fit(
-            train_images,
-            train_classes,
-            batch_size=self.batch_size,
+        history = model.fit_generator(
+            train_generator,
+            steps_per_epoch=math.ceil(train_generator.n/self.batch_size),
             epochs=self.epochs,
-            validation_split=self.valid_rate)
+            validation_data=valid_generator,
+            validation_steps=math.ceil(valid_generator.n/self.batch_size))
 
         return model, history.history
 
