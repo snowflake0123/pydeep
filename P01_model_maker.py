@@ -9,11 +9,12 @@ import P11_model_util as mutil
 
 
 class ModelMaker:
+
     # コンストラクタ
     def __init__(self, src_dir, dst_dir, est_file,
                  info_file, graph_file, hist_file,
                  input_size, filters, kernel_size, pool_size, dense_dims,
-                 lr, batch_size, epochs, valid_rate):
+                 lr, batch_size, reuse_count, epochs, valid_rate):
         self.src_dir     = src_dir
         self.dst_dir     = dst_dir
         self.est_file    = est_file
@@ -27,6 +28,7 @@ class ModelMaker:
         self.dense_dims  = dense_dims
         self.lr          = lr
         self.batch_size  = batch_size
+        self.reuse_count = reuse_count
         self.epochs      = epochs
         self.valid_rate  = valid_rate
 
@@ -67,17 +69,19 @@ class ModelMaker:
 
     # モデルを訓練するメソッド
     def fit_model(self, model):
-        # データセットの読み込み
+        # データセット読み込みのためのジェネレータを取得
         train_generator, valid_generator = util.make_generator(
             self.src_dir, self.valid_rate, self.input_size, self.batch_size)
 
         # 訓練の実行
         history = model.fit_generator(
             train_generator,
-            steps_per_epoch=math.ceil(train_generator.n/self.batch_size),
+            steps_per_epoch=math.ceil(
+                train_generator.n/self.batch_size)*self.reuse_count,
             epochs=self.epochs,
             validation_data=valid_generator,
-            validation_steps=math.ceil(valid_generator.n/self.batch_size))
+            validation_steps=math.ceil(
+                valid_generator.n/self.batch_size)*self.reuse_count)
 
         return model, history.history
 
