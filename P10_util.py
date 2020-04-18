@@ -19,9 +19,16 @@ def mkdir(d, rm=False):
 
 # 訓練用データセットを取得する関数
 def make_generator(src_dir, valid_rate, input_size, batch_size):
-    # ImageDataGenerator クラスのインスタンスを作成
+    # ImageDataGenerator クラスのインスタンスを作成（データ拡張あり）
     train_datagen = ImageDataGenerator(
         rescale=1./255,
+        rotation_range=30,
+        width_shift_range=0.2,
+        height_shift_range=0.2,
+        shear_range=30,
+        zoom_range=[0.7, 1.3],
+        horizontal_flip=True,
+        vertical_flip=True,
         validation_split=valid_rate)
 
     # 訓練用データを読み込むためのジェネレータを作成
@@ -45,6 +52,7 @@ def make_generator(src_dir, valid_rate, input_size, batch_size):
 
 # 訓練状況を可視化する関数
 def plot(history, filename):
+
     # 訓練状況の折れ線グラフを描画する関数
     def add_subplot(nrows, ncols, index, xdata, train_ydata, valid_ydata, ylim, ylabel):
         plt.subplot(nrows, ncols, index)
