@@ -14,6 +14,7 @@ POOL_SIZE   = (2, 2)
 DENSE_DIMS  = [1024, 128]
 LR          = 1e-3
 BATCH_SIZE  = 32
+REUSE_CNT   = 5
 EPOCHS      = 100
 VALID_RATE  = 0.2
 
@@ -35,6 +36,7 @@ maker = ModelMaker (
     dense_dims  = DENSE_DIMS,
     lr          = LR,
     batch_size  = BATCH_SIZE,
+    reuse_count = REUSE_CNT,
     epochs      = EPOCHS,
     valid_rate  = VALID_RATE)
 maker.execute()
