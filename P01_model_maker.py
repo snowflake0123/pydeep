@@ -1,6 +1,6 @@
 import math
 
-from keras.layers import Flatten, Input
+from keras.layers import Dropout, Flatten, Input
 from keras.models import Model
 from keras.optimizers import Adam
 
@@ -14,7 +14,7 @@ class ModelMaker:
     def __init__(self, src_dir, dst_dir, est_file,
                  info_file, graph_file, hist_file,
                  input_size, filters, kernel_size, pool_size, dense_dims,
-                 lr, batch_size, reuse_count, epochs, valid_rate):
+                 drop_rate, lr, batch_size, reuse_count, epochs, valid_rate):
         self.src_dir     = src_dir
         self.dst_dir     = dst_dir
         self.est_file    = est_file
@@ -26,6 +26,7 @@ class ModelMaker:
         self.kernel_size = kernel_size
         self.pool_size   = pool_size
         self.dense_dims  = dense_dims
+        self.drop_rate   = drop_rate
         self.lr          = lr
         self.batch_size  = batch_size
         self.reuse_count = reuse_count
@@ -46,6 +47,9 @@ class ModelMaker:
 
         # 平滑化層の定義
         x = Flatten()(x)
+
+        # ドロップアウト層の定義
+        x = Dropout(self.drop_rate)(x)
 
         # 全結合層の定義
         for dim in self.dense_dims[:-1]:
