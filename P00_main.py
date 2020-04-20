@@ -12,11 +12,13 @@ FILTERS     = (64, 128, 256)
 KERNEL_SIZE = (3, 3)
 POOL_SIZE   = (2, 2)
 DENSE_DIMS  = [1024, 128]
+DROP_RATE   = 0.25
 LR          = 1e-3
 BATCH_SIZE  = 32
 REUSE_CNT   = 5
 EPOCHS      = 100
 VALID_RATE  = 0.2
+
 
 n_class = len(os.listdir(SRC_DIR))
 DENSE_DIMS.append(n_class)
@@ -34,6 +36,7 @@ maker = ModelMaker (
     kernel_size = KERNEL_SIZE,
     pool_size   = POOL_SIZE,
     dense_dims  = DENSE_DIMS,
+    drop_rate   = DROP_RATE,
     lr          = LR,
     batch_size  = BATCH_SIZE,
     reuse_count = REUSE_CNT,
