@@ -12,18 +12,19 @@ FILTERS     = (64, 128, 256, 512, 1024)
 KERNEL_SIZE = (3, 3)
 POOL_SIZE   = (2, 2)
 DENSE_DIMS  = [4096, 2048, 1024, 128]
-LR          = 1e-3
+LR          = 1e-4
 BATCH_SIZE  = 32
 REUSE_CNT   = 10
-EPOCHS      = 100
+EPOCHS      = 200
 VALID_RATE  = 0.2
+ES_PATIENCE = 30
 
 
 n_class = len(os.listdir(SRC_DIR))
 DENSE_DIMS.append(n_class)
 
 from P01_model_maker import ModelMaker
-maker = ModelMaker (
+maker = ModelMaker(
     src_dir     = SRC_DIR,
     dst_dir     = DST_DIR,
     est_file    = EST_FILE,
@@ -39,5 +40,6 @@ maker = ModelMaker (
     batch_size  = BATCH_SIZE,
     reuse_count = REUSE_CNT,
     epochs      = EPOCHS,
-    valid_rate  = VALID_RATE)
+    valid_rate  = VALID_RATE,
+    es_patience = ES_PATIENCE)
 maker.execute()
