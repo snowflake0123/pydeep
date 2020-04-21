@@ -1,6 +1,7 @@
 import math
 
-from keras.layers import Dropout, Flatten, Input
+from keras.callbacks import EarlyStopping
+from keras.layers import Flatten, Input
 from keras.models import Model
 from keras.optimizers import Adam
 
@@ -14,7 +15,7 @@ class ModelMaker:
     def __init__(self, src_dir, dst_dir, est_file,
                  info_file, graph_file, hist_file,
                  input_size, filters, kernel_size, pool_size, dense_dims,
-                 lr, batch_size, reuse_count, epochs, valid_rate):
+                 lr, batch_size, reuse_count, epochs, valid_rate, es_patience):
         self.src_dir     = src_dir
         self.dst_dir     = dst_dir
         self.est_file    = est_file
@@ -31,6 +32,7 @@ class ModelMaker:
         self.reuse_count = reuse_count
         self.epochs      = epochs
         self.valid_rate  = valid_rate
+        self.es_patience = es_patience
 
 
     # モデルを定義するメソッド
@@ -73,6 +75,13 @@ class ModelMaker:
         train_generator, valid_generator = util.make_generator(
             self.src_dir, self.valid_rate, self.input_size, self.batch_size)
 
+        # コールバックの定義
+        early_stopping = EarlyStopping(
+            patience=self.es_patience,
+            restore_best_weights=True,
+            verbose=1)
+        callbacks = [early_stopping, ]
+
         # 訓練の実行
         history = model.fit_generator(
             train_generator,
@@ -81,7 +90,8 @@ class ModelMaker:
             epochs=self.epochs,
             validation_data=valid_generator,
             validation_steps=math.ceil(
-                valid_generator.n/self.batch_size)*self.reuse_count)
+                valid_generator.n/self.batch_size)*self.reuse_count,
+            callbacks=callbacks)
 
         return model, history.history
 
@@ -106,5 +116,7 @@ class ModelMaker:
             history['val_accuracy'] = history.pop('val_acc')
         util.plot(history, self.hist_file)
 
-        # 最終エポックの検証用データにおける損失を標準出力
-        print('val_loss: %f' % history['val_loss'][-1])
+        # 検証用データにおける最小の損失を標準出力
+        min_val = min(history['val_loss'])
+        min_ind = history['val_loss'].index(min_val)
+        print('val_loss: %f (Epoch: %d)' % (min_val, min_ind + 1))
