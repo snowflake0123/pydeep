@@ -13,11 +13,13 @@ KERNEL_SIZE = (3, 3)
 POOL_SIZE   = (2, 2)
 DENSE_DIMS  = [4096, 2048, 1024, 128]
 LR          = 1e-4
+MIN_LR      = 1e-7
 BATCH_SIZE  = 32
 REUSE_CNT   = 10
 EPOCHS      = 200
 VALID_RATE  = 0.2
 ES_PATIENCE = 30
+LR_PATIENCE = 10
 
 
 n_class = len(os.listdir(SRC_DIR))
@@ -37,9 +39,11 @@ maker = ModelMaker(
     pool_size   = POOL_SIZE,
     dense_dims  = DENSE_DIMS,
     lr          = LR,
+    min_lr      = MIN_LR,
     batch_size  = BATCH_SIZE,
     reuse_count = REUSE_CNT,
     epochs      = EPOCHS,
     valid_rate  = VALID_RATE,
-    es_patience = ES_PATIENCE)
+    es_patience = ES_PATIENCE,
+    lr_patience = LR_PATIENCE)
 maker.execute()
