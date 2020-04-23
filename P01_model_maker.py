@@ -1,6 +1,6 @@
 import math
 
-from keras.callbacks import EarlyStopping
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
 from keras.layers import Flatten, Input
 from keras.models import Model
 from keras.optimizers import Adam
@@ -15,7 +15,8 @@ class ModelMaker:
     def __init__(self, src_dir, dst_dir, est_file,
                  info_file, graph_file, hist_file,
                  input_size, filters, kernel_size, pool_size, dense_dims,
-                 lr, batch_size, reuse_count, epochs, valid_rate, es_patience):
+                 lr, min_lr, batch_size, reuse_count, epochs, valid_rate,
+                 es_patience, lr_patience):
         self.src_dir     = src_dir
         self.dst_dir     = dst_dir
         self.est_file    = est_file
@@ -28,11 +29,13 @@ class ModelMaker:
         self.pool_size   = pool_size
         self.dense_dims  = dense_dims
         self.lr          = lr
+        self.min_lr      = min_lr
         self.batch_size  = batch_size
         self.reuse_count = reuse_count
         self.epochs      = epochs
         self.valid_rate  = valid_rate
         self.es_patience = es_patience
+        self.lr_patience = lr_patience
 
 
     # モデルを定義するメソッド
@@ -80,7 +83,11 @@ class ModelMaker:
             patience=self.es_patience,
             restore_best_weights=True,
             verbose=1)
-        callbacks = [early_stopping, ]
+        reduce_lr_op = ReduceLROnPlateau(
+            patience=self.lr_patience,
+            min_lr=self.min_lr,
+            verbose=1)
+        callbacks = [early_stopping, reduce_lr_op]
 
         # 訓練の実行
         history = model.fit_generator(
