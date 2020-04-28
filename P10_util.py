@@ -1,8 +1,9 @@
 import os
 import shutil
 
-from keras.preprocessing.image import ImageDataGenerator
+from keras.preprocessing.image import ImageDataGenerator, img_to_array, load_img
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 # 指定された名称のディレクトリを作成する関数
@@ -67,7 +68,7 @@ def plot(history, filename):
 
     # 描画領域のサイズを指定
     plt.figure(figsize=(10, 10))
-    # x 軸のデータ(エポック数)を取得
+    # x 軸のデータ（エポック数）を取得
     xdata = range(1, 1 + len(history['loss']))
     # 検証用データにおける損失を可視化
     add_subplot(2, 1, 1, xdata, history['loss'], history['val_loss'], (0, 5), 'loss')
@@ -76,3 +77,11 @@ def plot(history, filename):
     # 可視化結果をファイルとして保存
     plt.savefig(filename)
     plt.close('all')
+
+
+# 推定対象の画像を読み込む関数
+def load_target_img(filename, input_size):
+    img = load_img(filename, target_size=input_size)
+    img = img_to_array(img) / 255
+    img = np.expand_dims(img, axis=0)
+    return img
