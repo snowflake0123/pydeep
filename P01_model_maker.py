@@ -1,4 +1,5 @@
 import math
+import pickle
 
 from keras.applications import VGG16
 from keras.callbacks import EarlyStopping, ReduceLROnPlateau
@@ -13,7 +14,7 @@ import P11_model_util as mutil
 class ModelMaker:
 
     # コンストラクタ
-    def __init__(self, src_dir, dst_dir, est_file,
+    def __init__(self, src_dir, dst_dir, est_file, cls_file,
                  info_file, graph_file, hist_file, ft_hist_file,
                  input_size, dense_dims, lr, ft_lr, min_lr, min_ft_lr,
                  batch_size, reuse_count, epochs, valid_rate,
@@ -21,6 +22,7 @@ class ModelMaker:
         self.src_dir      = src_dir
         self.dst_dir      = dst_dir
         self.est_file     = est_file
+        self.cls_file     = cls_file
         self.info_file    = info_file
         self.graph_file   = graph_file
         self.hist_file    = hist_file
@@ -92,11 +94,11 @@ class ModelMaker:
 
     # モデルを訓練するメソッド
     def fit_model(self, model):
-        # (1) データセット読み込みのためのジェネレータを取得
+        # データセット読み込みのためのジェネレータを取得
         train_generator, valid_generator = util.make_generator(
             self.src_dir, self.valid_rate, self.input_size, self.batch_size)
 
-        # (2) 1回目訓練用のコールバックを定義
+        # 1回目訓練用のコールバックを定義
         early_stopping = EarlyStopping(
             patience=self.es_patience,
             restore_best_weights=True,
@@ -107,7 +109,7 @@ class ModelMaker:
             verbose=1)
         callbacks = [early_stopping, reduce_lr_op]
 
-        # (3) 1回目訓練を実行
+        # 1回目訓練を実行
         history = model.fit_generator(
             train_generator,
             steps_per_epoch=math.ceil(
@@ -118,17 +120,17 @@ class ModelMaker:
                 valid_generator.n/self.batch_size)*self.reuse_count,
             callbacks=callbacks)
 
-        # (4) 1回目訓練済みのモデルの特定層以降の凍結を解除
+        # 1回目訓練済みのモデルの特定層以降の凍結を解除
         model = self.unfreeze_layers(model)
 
-        # (5) ファインチューニング用のコールバックを定義
+        # ファインチューニング用のコールバックを定義
         reduce_lr_op = ReduceLROnPlateau(
             patience=self.lr_patience,
             min_lr=self.min_ft_lr,
             verbose=1)
         callbacks = [early_stopping, reduce_lr_op]
 
-        # (6) ファインチューニングを実行
+        # ファインチューニングを実行
         ft_history = model.fit_generator(
             train_generator,
             steps_per_epoch=math.ceil(
@@ -139,8 +141,12 @@ class ModelMaker:
                 valid_generator.n/self.batch_size)*self.reuse_count,
             callbacks=callbacks)
 
-        # (7) モデル，1回目訓練・ファインチューニングの訓練状況を返却
-        return model, history.history, ft_history.history
+        # クラス情報を取得
+        classes = train_generator.class_indices
+        classes = {v:k for k, v in classes.items()}
+
+        # モデル，クラス情報，1回目訓練・ファインチューニングの訓練状況を返却
+        return model, classes, history.history, ft_history.history
 
 
     # プログラム全体を制御するメソッド
@@ -157,6 +163,11 @@ class ModelMaker:
         # ネットワーク構造を保存
         mutil.save_model_info(self.info_file, self.graph_file, model)
 
+        # クラス情報を保存・標準出力
+        with open(self.cls_file, 'wb') as f:
+            pickle.dump(classes, f)
+        print('Classes: %s' % classes)
+
         # 訓練状況を保存
         if 'acc' in history:
             history['accuracy'] = history.pop('acc')
@@ -166,6 +177,7 @@ class ModelMaker:
         util.plot(history, self.hist_file)
         util.plot(ft_history, self.ft_hist_file)
 
+        # リスト内の最小値とそのインデックスを返す処理
         def get_min(loss):
             min_val = min(loss)
             min_ind = loss.index(min_val)
