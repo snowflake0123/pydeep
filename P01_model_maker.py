@@ -89,14 +89,15 @@ class ModelMaker:
             loss='categorical_crossentropy',
             metrics=['accuracy'])
 
-        return model
-
 
     # モデルを訓練するメソッド
     def fit_model(self, model):
         # データセット読み込みのためのジェネレータを取得
         train_generator, valid_generator = util.make_generator(
             self.src_dir, self.valid_rate, self.input_size, self.batch_size)
+
+        # モデルを定義
+        model = self.define_model()
 
         # 1回目訓練用のコールバックを定義
         early_stopping = EarlyStopping(
@@ -121,7 +122,7 @@ class ModelMaker:
             callbacks=callbacks)
 
         # 1回目訓練済みのモデルの特定層以降の凍結を解除
-        model = self.unfreeze_layers(model)
+        self.unfreeze_layers(model)
 
         # ファインチューニング用のコールバックを定義
         reduce_lr_op = ReduceLROnPlateau(
@@ -142,19 +143,17 @@ class ModelMaker:
             callbacks=callbacks)
 
         # クラス情報を取得
-        classes = train_generator.class_indices
-        classes = {v:k for k, v in classes.items()}
+        cls_info = train_generator.class_indices
+        cls_info = {v:k for k, v in cls_info.items()}
 
         # モデル，クラス情報，1回目訓練・ファインチューニングの訓練状況を返却
-        return model, classes, history.history, ft_history.history
+        return model, cls_info, history.history, ft_history.history
 
 
     # プログラム全体を制御するメソッド
     def execute(self):
-        # モデルを定義
-        model = self.define_model()
         # モデルを訓練
-        model, history, ft_history = self.fit_model(model)
+        model, cls_info, history, ft_history = self.fit_model(model)
 
         # 訓練したモデルを保存
         util.mkdir(self.dst_dir, rm=True)
@@ -165,8 +164,8 @@ class ModelMaker:
 
         # クラス情報を保存・標準出力
         with open(self.cls_file, 'wb') as f:
-            pickle.dump(classes, f)
-        print('Classes: %s' % classes)
+            pickle.dump(cls_info, f)
+        print('Classes: %s' % cls_info)
 
         # 訓練状況を保存
         if 'acc' in history:

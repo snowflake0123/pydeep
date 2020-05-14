@@ -80,7 +80,7 @@ if 'trn' in sys.argv:
 if 'est' in sys.argv:
     print('Conducting estimation...')
 
-    from D02_estimator import Estimator
+    from P02_estimator import Estimator
     estimator = Estimator(
         src_dir    = EST_SRC_DIR,
         dst_dir    = EST_DST_DIR,
