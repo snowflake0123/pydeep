@@ -153,7 +153,7 @@ class ModelMaker:
     # プログラム全体を制御するメソッド
     def execute(self):
         # モデルを訓練
-        model, cls_info, history, ft_history = self.fit_model(model)
+        model, cls_info, history, ft_history = self.fit_model()
 
         # 訓練したモデルを保存
         util.mkdir(self.dst_dir, rm=True)
